@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+    <head>
+	<meta charset="utf-8">
+		<title>梅登黑德网格定位系统(Maidenhead Locator Grid)-欢哥科技</title>
+		<meta name="description" content="梅登黑德网格定位系统(Maidenhead Locator Grid)" />
+		<script type="text/javascript" src="jquery.js"></script>
+		<script type="text/javascript" src="ham_geocoding.js"></script>
+		<link rel="stylesheet" href="hamgeocoding.css" />
+    </head>
+         
+		<body>
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin=""/>
+		<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js" integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA==" crossorigin=""></script>
+		<script type="text/javascript" src="L.Maidenhead.js"></script>
+		<div class="container">
+					<div  class="fent">
+					<div class="label3">Grid 网格地址:</div>
+						<input class="input2" id="locator_klick" name="lockatt" maxlength="6" type=text  />
+					<div class="label3">地点: </div>
+					<input class="input1"  id="locality" name="lockatt_locality" type=text /> 
+					<div class="label3">国家/地区: </div>
+					<div class="input1"  id="country" name="lockatt_country" size="30" />&nbsp;</div>
+					<div class="clear"></div>	
+				</div>
+					<input class="link_button" id="dxcluster_list_button" type="button" value="梅登黑德网格定位系统-Wiki" />
+					<div class="messages">使用方法输入 6 个字符的网格代码、输入地点、单击地图！</div>
+					<input class="link_button" id="dxcluster_map_button" type="button" value="快点HAM工具箱" />
+				<div id='map_canvas' style=' width: 1025px; height: 500px; '></div>	
+				<div class="gps">
+	                <div class="label4">&nbsp;©<a href="http://www.ha8tks.hu">HA8TKS</a></div>
+					<div class="label2">纬度（Latitude）: </div><div class="latlng" id="lngDeg">&nbsp;</div>
+					<div class="label2">经度（Longitude）: </div><div class="latlng" id="latDeg">&nbsp;</div>
+					<div class="label2">Grid 网格地址: </div>
+					<div  class="latlng" id="locator">&nbsp;</div>
+					<div><input class="clear_button" id="clear_button" type="button" value="重置" />  </div>
+					<div class="clear"></div>	
+				</div>
+	   </div>
+	  	<script type="text/javascript">
+	var layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		attribution: 'Geocoding: <a href="https://nominatim.org">Nominatim</a> | Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+		minZoom: 2,
+		maxZoom: 19
+	});
+
+	var map = L.map('map_canvas', {
+		layers: [layer],
+		center: [19, 0],
+		zoom: 2
+	});
+	
+	var maidenhead = L.maidenhead().addTo(map);
+    /*
+	L.control.layers({
+		'Map': layer
+	}, {
+		'Grid': maidenhead
+	}, {
+		collapsed: false
+	}).addTo(map);
+	*/
+
+	$('.leaflet-container').css('cursor','default');
+	
+	map.on('mousemove', onMapMove);
+	map.on('click', onMapClick);
+	</script>
+     </body>
+</html>
