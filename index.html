@@ -1,70 +1,287 @@
 <!DOCTYPE html>
-<html>
-    <head>
-	<meta charset="utf-8">
-		<title>梅登黑德网格定位系统(Maidenhead Locator Grid)-欢哥科技</title>
-		<meta name="description" content="梅登黑德网格定位系统(Maidenhead Locator Grid)" />
-		<script type="text/javascript" src="jquery.js"></script>
-		<script type="text/javascript" src="ham_geocoding.js"></script>
-		<link rel="stylesheet" href="hamgeocoding.css" />
-    </head>
-         
-		<body>
-		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin=""/>
-		<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js" integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA==" crossorigin=""></script>
-		<script type="text/javascript" src="L.Maidenhead.js"></script>
-		<div class="container">
-					<div  class="fent">
-					<div class="label3">Grid 网格地址:</div>
-						<input class="input2" id="locator_klick" name="lockatt" maxlength="6" type=text  />
-					<div class="label3">地点: </div>
-					<input class="input1"  id="locality" name="lockatt_locality" type=text /> 
-					<div class="label3">国家/地区: </div>
-					<div class="input1"  id="country" name="lockatt_country" size="30" />&nbsp;</div>
-					<div class="clear"></div>	
-				</div>
-					<input class="link_button" id="dxcluster_list_button" type="button" value="梅登黑德网格定位系统-Wiki" />
-					<div class="messages">使用方法输入 6 个字符的网格代码、输入地点、单击地图！</div>
-					<input class="link_button" id="dxcluster_map_button" type="button" value="快点HAM工具箱" />
-				<div id='map_canvas' style=' width: 1025px; height: 500px; '></div>	
-				<div class="gps">
-	                <div class="label4">&nbsp;©<a href="http://www.ha8tks.hu">HA8TKS</a></div>
-					<div class="label2">纬度（Latitude）: </div><div class="latlng" id="lngDeg">&nbsp;</div>
-					<div class="label2">经度（Longitude）: </div><div class="latlng" id="latDeg">&nbsp;</div>
-					<div class="label2">Grid 网格地址: </div>
-					<div  class="latlng" id="locator">&nbsp;</div>
-					<div><input class="clear_button" id="clear_button" type="button" value="重置" />  </div>
-					<div class="clear"></div>	
-				</div>
-	   </div>
-	  	<script type="text/javascript">
-	var layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-		attribution: 'Geocoding: <a href="https://nominatim.org">Nominatim</a> | Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
-		minZoom: 2,
-		maxZoom: 19
-	});
+<html lang="zh-CN">
 
-	var map = L.map('map_canvas', {
-		layers: [layer],
-		center: [19, 0],
-		zoom: 2
-	});
-	
-	var maidenhead = L.maidenhead().addTo(map);
-    /*
-	L.control.layers({
-		'Map': layer
-	}, {
-		'Grid': maidenhead
-	}, {
-		collapsed: false
-	}).addTo(map);
-	*/
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="梅登黑德网格, Maidenhead Grid, 经纬度, 业余无线电, AMap, 高德地图, 网格定位">
+    <meta name="description" content="交互式梅登黑德网格 (Maidenhead Grid) 工具：点击地图或输入经纬度即可查看网格、坐标与缩放等级，支持定位与复制信息。">
+    <title>梅登黑德网格定位 | 欢哥科技</title>
+    <link
+        href="https://fonts.loli.net/css2?family=Space+Grotesk:wght@400;500;600&family=Noto+Sans+SC:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Space Grotesk', 'Noto Sans SC', 'sans-serif'],
+                    },
+                    colors: {
+                        midnight: '#0b1221',
+                        neon: '#70f3ff',
+                        amber: '#fbbf24',
+                    },
+                    boxShadow: {
+                        glow: '0 25px 70px rgba(112, 243, 255, 0.20)',
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://webapi.amap.com/maps?v=2.0&key=6f025e700cbacbb0bb866712d20bb35c"></script>
+    <script src="AMap.Maidenhead.js"></script>
+</head>
 
-	$('.leaflet-container').css('cursor','default');
-	
-	map.on('mousemove', onMapMove);
-	map.on('click', onMapClick);
-	</script>
-     </body>
+<body class="min-h-screen bg-gradient-to-br from-midnight via-slate-900 to-slate-950 text-slate-100 font-display">
+  <div class="max-w-7xl mx-auto p-3 sm:p-4 space-y-4">
+    <header class="flex flex-col gap-2">
+            <div class="text-sm uppercase tracking-[0.3em] text-slate-400">Ham · Maidenhead Locator System</div>
+            <div class="flex items-baseline gap-3">
+                <h1 class="text-3xl md:text-4xl font-semibold text-white">梅登黑德网格定位</h1>
+            </div>
+            <p class="text-slate-300 max-w-3xl">梅登黑德定位系统是以经纬度作为基准线，将地球分为若干网格，以实现精确报告自己位置的系统。</p>
+        </header>
+
+    <div class="flex flex-col lg:flex-row gap-4">
+      <div class="flex-[4] min-h-[68vh]">
+        <div id="map" class="h-[68vh] md:h-[78vh] rounded-2xl border border-slate-800 bg-slate-900 shadow-glow"></div>
+            </div>
+            <div class="flex-[1] w-full lg:max-w-xs space-y-4">
+                <div class="p-4 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-white">功能面板</h2>
+                            <p class="text-xs text-slate-400">地图、定位与网格查询</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <button id="btnLocate"
+                                class="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-medium border border-slate-700">当前位置</button>
+                            <button id="btnReset"
+                                class="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-medium border border-slate-700">重置视图</button>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-xs text-slate-400">经纬度输入</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <input id="lngInput" type="number" step="0.000001" placeholder="116.391"
+                                    class="w-full px-3 py-2 text-sm rounded-xl bg-slate-800 border border-slate-700 focus:border-neon focus:outline-none" />
+                                <input id="latInput" type="number" step="0.000001" placeholder="39.907"
+                                    class="w-full px-3 py-2 text-sm rounded-xl bg-slate-800 border border-slate-700 focus:border-neon focus:outline-none" />
+                            </div>
+                            <button id="btnGo"
+                                class="w-full px-3 py-2 rounded-xl bg-neon text-midnight font-semibold hover:brightness-95">定位到坐标</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-white">实时信息</h2>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center gap-2 border-b border-slate-800 pb-2">
+                            <span class="text-slate-400">经度</span>
+                            <div class="flex items-center gap-2 ml-auto">
+                                <span id="lngDisplay" class="font-mono">--</span>
+                                <button data-copy="lngDisplay"
+                                    class="px-2 py-1 text-[11px] rounded-lg bg-slate-800 border border-slate-700 hover:border-neon">复制</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 border-b border-slate-800 pb-2">
+                            <span class="text-slate-400">纬度</span>
+                            <div class="flex items-center gap-2 ml-auto">
+                                <span id="latDisplay" class="font-mono">--</span>
+                                <button data-copy="latDisplay"
+                                    class="px-2 py-1 text-[11px] rounded-lg bg-slate-800 border border-slate-700 hover:border-neon">复制</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 border-b border-slate-800 pb-2">
+                            <span class="text-slate-400">梅登黑德网格</span>
+                            <div class="flex items-center gap-2 ml-auto">
+                                <span id="gridDisplay" class="font-mono text-neon">--</span>
+                                <button data-copy="gridDisplay"
+                                    class="px-2 py-1 text-[11px] rounded-lg bg-slate-800 border border-slate-700 hover:border-neon">复制</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 border-b border-slate-800 pb-2">
+                            <span class="text-slate-400">地图缩放等级</span>
+                            <div class="flex items-center gap-2 ml-auto">
+                                <span id="zoomDisplay" class="font-mono">--</span>
+                                <button data-copy="zoomDisplay"
+                                    class="px-2 py-1 text-[11px] rounded-lg bg-slate-800 border border-slate-700 hover:border-neon">复制</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 border-b border-slate-800 pb-2">
+                            <span class="text-slate-400">项目地址</span>
+                            <div class="flex items-center gap-2 ml-auto">
+                                <a href="https://github.com/muzihuaner/Maidenhead-Locator-Grid" class="font-mono">Github</a>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">提示：点击地图或拖动标记可更新坐标与网格。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let map, marker, geolocation = null;
+
+        function maidenhead(lat, lon) {
+            const adjLon = lon + 180;
+            const adjLat = lat + 90;
+            if (adjLon < 0 || adjLat < 0 || adjLon >= 360 || adjLat >= 180) return 'Invalid';
+
+            const fieldLon = Math.floor(adjLon / 20);
+            const fieldLat = Math.floor(adjLat / 10);
+
+            const squareLon = Math.floor((adjLon % 20) / 2);
+            const squareLat = Math.floor(adjLat % 10);
+
+            const subLon = Math.floor(((adjLon % 2) / (2 / 24)));
+            const subLat = Math.floor(((adjLat % 1) / (1 / 24)));
+
+            const letters = 'ABCDEFGHIJKLMNOPQR';
+            const subs = 'ABCDEFGHIJKLMNOPQRSTUVWX';
+
+            return `${letters[fieldLon]}${letters[fieldLat]}${squareLon}${squareLat}${subs[subLon]}${subs[subLat]}`;
+        }
+
+        function updateInfo(lnglat) {
+            const lng = lnglat.lng;
+            const lat = lnglat.lat;
+            document.getElementById('lngDisplay').textContent = lng.toFixed(6);
+            document.getElementById('latDisplay').textContent = lat.toFixed(6);
+            document.getElementById('gridDisplay').textContent = maidenhead(lat, lng);
+            document.getElementById('zoomDisplay').textContent = map.getZoom().toFixed(1);
+            document.getElementById('lngInput').value = lng.toFixed(6);
+            document.getElementById('latInput').value = lat.toFixed(6);
+        }
+
+        function setMarker(lnglat) {
+            if (!marker) {
+                marker = new AMap.Marker({ draggable: true, cursor: 'move' });
+                marker.on('dragend', (e) => {
+                    updateInfo(e.lnglat);
+                });
+                marker.on('dragging', (e) => updateInfo(e.lnglat));
+            }
+            marker.setMap(map);
+            marker.setPosition(lnglat);
+        }
+
+        function moveTo(lnglat, zoom = null) {
+            setMarker(lnglat);
+            if (zoom) map.setZoomAndCenter(zoom, lnglat);
+            else map.setCenter(lnglat);
+            updateInfo(lnglat);
+        }
+
+        function initMap() {
+            map = new AMap.Map('map', {
+                zoom: 4,
+                center: [105.0, 35.0],
+                viewMode: '2D',
+                mapStyle: 'amap://styles/whitesmoke',
+            });
+            const maidenheadGrid = new Maidenhead({
+                color: 'rgba(0, 100, 255, 0.5)' // 自定义颜色
+            });
+            maidenheadGrid.addTo(map);
+
+            AMap.plugin(['AMap.ToolBar', 'AMap.Scale', 'AMap.Geolocation', 'AMap.ControlBar'], () => {
+                map.addControl(new AMap.ToolBar({ position: 'LT' }));
+                map.addControl(new AMap.Scale());
+                map.addControl(new AMap.ControlBar({ position: { top: '10px', right: '10px' } }));
+
+                geolocation = new AMap.Geolocation({
+                    enableHighAccuracy: true,
+                    zoomToAccuracy: true,
+                    buttonPosition: 'RB',
+                    buttonOffset: new AMap.Pixel(10, 20),
+                });
+                map.addControl(geolocation);
+            });
+
+            map.on('click', (e) => {
+                moveTo(e.lnglat);
+            });
+
+            map.on('zoomend', () => {
+                document.getElementById('zoomDisplay').textContent = map.getZoom().toFixed(1);
+            });
+
+            // 初始化到北京天安门
+            const initPos = new AMap.LngLat(116.397389, 39.908722);
+            moveTo(initPos, 12);
+            document.getElementById('zoomDisplay').textContent = map.getZoom().toFixed(1);
+        }
+
+        function locateMe() {
+            if (!geolocation) return;
+            geolocation.getCurrentPosition((status, result) => {
+                if (status === 'complete' && result.position) {
+                    moveTo(result.position, 15);
+                } else {
+                    alert('定位失败，请检查浏览器定位权限');
+                }
+            });
+        }
+
+        function gotoInput() {
+            const lng = parseFloat(document.getElementById('lngInput').value);
+            const lat = parseFloat(document.getElementById('latInput').value);
+            if (Number.isFinite(lng) && Number.isFinite(lat)) {
+                moveTo(new AMap.LngLat(lng, lat), 12);
+            } else {
+                alert('请输入有效的经纬度');
+            }
+        }
+
+        function resetView() {
+            map.setZoomAndCenter(4, [105.0, 35.0]);
+        }
+
+        function setupCopyButtons() {
+            const buttons = document.querySelectorAll('[data-copy]');
+            buttons.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-copy');
+                    const el = document.getElementById(targetId);
+                    const text = el ? el.textContent.trim() : '';
+                    if (!text) return;
+                    navigator.clipboard.writeText(text).then(() => {
+                        const original = btn.textContent;
+                        btn.textContent = '已复制';
+                        btn.classList.add('border-neon', 'text-neon');
+                        setTimeout(() => {
+                            btn.textContent = original;
+                            btn.classList.remove('border-neon', 'text-neon');
+                        }, 1200);
+                    }).catch(() => alert('复制失败，请检查浏览器权限'));
+                });
+            });
+        }
+
+        function toggleTheme() {
+            mapStyleKey = mapStyleKey === 'light' ? 'dark' : 'light';
+            map.setMapStyle(mapStyles[mapStyleKey]);
+            document.getElementById('themeLabel').textContent = mapStyleKey === 'light' ? '白天模式' : '夜间模式';
+        }
+
+        window.onload = () => {
+            initMap();
+            document.getElementById('btnLocate').addEventListener('click', locateMe);
+            document.getElementById('btnGo').addEventListener('click', gotoInput);
+            document.getElementById('btnReset').addEventListener('click', resetView);
+            setupCopyButtons();
+        }
+    </script>
+</body>
+
 </html>
