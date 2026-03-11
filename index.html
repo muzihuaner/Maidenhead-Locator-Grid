@@ -76,6 +76,15 @@
                             <button id="btnGo"
                                 class="w-full px-3 py-2 rounded-xl bg-neon text-midnight font-semibold hover:brightness-95">定位到坐标</button>
                         </div>
+
+                        <div class="space-y-2">
+                            <label class="text-xs text-slate-400">网格定位（Maidenhead）</label>
+                            <input id="gridInput" type="text" maxlength="8" placeholder="OM89RK"
+                                class="w-full px-3 py-2 text-sm rounded-xl bg-slate-800 border border-slate-700 focus:border-neon focus:outline-none uppercase" />
+                            <button id="btnGridGo"
+                                class="w-full px-3 py-2 rounded-xl bg-amber text-slate-900 font-semibold hover:brightness-95">定位到网格中心</button>
+                            <p class="text-[11px] text-slate-500 leading-tight">支持 4/6 位网格（如 OM89、OM89RK），自动跳转至对应网格中心点。</p>
+                        </div>
                     </div>
                 </div>
 
@@ -150,6 +159,53 @@
             const subs = 'ABCDEFGHIJKLMNOPQRSTUVWX';
 
             return `${letters[fieldLon]}${letters[fieldLat]}${squareLon}${squareLat}${subs[subLon]}${subs[subLat]}`;
+        }
+
+        function maidenheadToLatLng(grid) {
+            if (!grid) return null;
+            const locator = grid.trim().toUpperCase();
+            if (locator.length % 2 !== 0 || (locator.length !== 4 && locator.length !== 6)) return null;
+
+            const fieldLetters = 'ABCDEFGHIJKLMNOPQR'; // 18
+            const subLetters = 'ABCDEFGHIJKLMNOPQRSTUVWX'; // 24
+
+            const fLon = fieldLetters.indexOf(locator[0]);
+            const fLat = fieldLetters.indexOf(locator[1]);
+            if (fLon < 0 || fLat < 0) return null;
+
+            let lon = -180 + fLon * 20;
+            let lat = -90 + fLat * 10;
+            let cellLon = 20, cellLat = 10; // 当前单元尺寸
+
+            if (locator.length >= 4) {
+                const sLon = parseInt(locator[2], 10);
+                const sLat = parseInt(locator[3], 10);
+                if (Number.isNaN(sLon) || Number.isNaN(sLat)) return null;
+                lon += sLon * 2;
+                lat += sLat * 1;
+                cellLon = 2;
+                cellLat = 1;
+            }
+
+            if (locator.length >= 6) {
+                const subLon = subLetters.indexOf(locator[4]);
+                const subLat = subLetters.indexOf(locator[5]);
+                if (subLon < 0 || subLat < 0) return null;
+                const unitLon = 2 / 24;
+                const unitLat = 1 / 24;
+                lon += subLon * unitLon;
+                lat += subLat * unitLat;
+                cellLon = unitLon;
+                cellLat = unitLat;
+            }
+
+            // 若有更细分 (8位数字) 可在此继续扩展，这里暂不实现
+
+            // 返回网格中心点
+            return {
+                lng: lon + cellLon / 2,
+                lat: lat + cellLat / 2,
+            };
         }
 
         function updateInfo(lnglat) {
@@ -243,6 +299,16 @@
             }
         }
 
+        function gotoGrid() {
+            const grid = document.getElementById('gridInput').value;
+            const pos = maidenheadToLatLng(grid);
+            if (pos) {
+                moveTo(new AMap.LngLat(pos.lng, pos.lat), 10);
+            } else {
+                alert('请输入有效的 4 或 6 位网格（如 OM89 / OM89RK）');
+            }
+        }
+
         function resetView() {
             map.setZoomAndCenter(4, [105.0, 35.0]);
         }
@@ -278,7 +344,11 @@
             initMap();
             document.getElementById('btnLocate').addEventListener('click', locateMe);
             document.getElementById('btnGo').addEventListener('click', gotoInput);
+            document.getElementById('btnGridGo').addEventListener('click', gotoGrid);
             document.getElementById('btnReset').addEventListener('click', resetView);
+            document.getElementById('gridInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') gotoGrid();
+            });
             setupCopyButtons();
         }
     </script>
